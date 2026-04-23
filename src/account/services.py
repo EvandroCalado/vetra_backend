@@ -3,15 +3,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.account.models import User
-from src.account.schemas import UserCreate, UserOut
-from src.account.utils import hash_password
+from src.account.schemas import UserLogin, UserOut, UserRegister
+from src.account.utils import hash_password, verify_password
 
 
 class AccountService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create(self, user: UserCreate) -> UserOut:
+    async def register(self, user: UserRegister) -> UserOut:
         stmt = select(User).where(User.email == user.email)
         result = await self.session.execute(stmt)
 
@@ -30,3 +30,18 @@ class AccountService:
         await self.session.refresh(new_user)
 
         return UserOut.model_validate(new_user)
+
+    async def login(self, user_login: UserLogin) -> User:
+        stmt = select(User).where(User.email == user_login.email)
+        result = await self.session.scalars(stmt)
+        user = result.first()
+
+        if not user or not verify_password(
+            user_login.password, user.hashed_password
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='Invalid credentials',
+            )
+
+        return user
