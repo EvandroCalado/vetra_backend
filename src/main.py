@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 
+from src.account.routers import router as account_router
+
 app = FastAPI(
     title='Vetra API',
     description='API documentation for Vetra',
 )
 
-
-@app.get('/')
-async def root():
-    return {'message': 'Hello World'}
+app.include_router(account_router, prefix='/account', tags=['Account'])

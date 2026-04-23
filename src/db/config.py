@@ -1,6 +1,5 @@
 from typing import Annotated, AsyncGenerator
 
-from decouple import config  # type: ignore
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -8,15 +7,18 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-DB_USER = config('DB_USER')
-DB_PASSWORD = config('DB_PASSWORD')
-DB_HOST = config('DB_HOST')
-DB_PORT = config('DB_PORT', cast=int)
-DB_NAME = config('DB_NAME')
+from src.db.settings import settings
+
+DB_USER = settings.DB_USER
+DB_PASSWORD = settings.DB_PASSWORD
+DB_HOST = settings.DB_HOST
+DB_PORT = settings.DB_PORT
+DB_NAME = settings.DB_NAME
 
 DATABASE_URL = (
     f'mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 )
+
 
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 async_session = async_sessionmaker(
