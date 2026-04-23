@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.account.models import User
-from src.account.schemas import UserCreate
+from src.account.schemas import UserCreate, UserOut
 from src.account.utils import hash_password
 
 
@@ -11,7 +11,7 @@ class AccountService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create(self, user: UserCreate):
+    async def create(self, user: UserCreate) -> UserOut:
         stmt = select(User).where(User.email == user.email)
         result = await self.session.execute(stmt)
 
@@ -29,4 +29,4 @@ class AccountService:
         await self.session.commit()
         await self.session.refresh(new_user)
 
-        return new_user
+        return UserOut.model_validate(new_user)

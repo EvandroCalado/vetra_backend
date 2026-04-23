@@ -31,6 +31,17 @@ select = ['I', 'F', 'E', 'W', 'PL', 'PT', 'FAST']
 preview = true
 quote-style = 'single'
 
+[tool.pyrefly]
+project-includes = ["src/**/*.py*", "src/**/*.ipynb", "main.py"]
+project-excludes = ["tests/**/*", "venv/**/*", ".venv/**/*", "migrations/**/*"]
+search-path = ["."]
+
+[tool.pyrefly.modules]
+fastapi = "typed"
+pydantic = "typed"
+sqlmodel = "typed"
+uvicorn = "stubbed"
+
 [tool.taskipy.tasks]
 lint = 'ruff check'
 pre_format = 'ruff check --fix'
