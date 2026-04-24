@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 
-from src.account.deps import AccountServiceDep
+from src.account.deps import AccountServiceDep, CurrentUserDep
 from src.account.schemas import UserLogin, UserOut, UserRegister
 from src.account.utils import create_tokens
 
@@ -29,7 +29,7 @@ async def login(service: AccountServiceDep, user_login: UserLogin):
         httponly=True,
         secure=True,
         samesite='lax',
-        max_age=24 * 60 * 60 * 1,  # 1 day
+        max_age=60 * 5,  # 5 minutes
     )
 
     response.set_cookie(
@@ -42,3 +42,8 @@ async def login(service: AccountServiceDep, user_login: UserLogin):
     )
 
     return response
+
+
+@router.get('/me/', response_model=UserOut)
+async def me(current_user: CurrentUserDep):
+    return current_user
