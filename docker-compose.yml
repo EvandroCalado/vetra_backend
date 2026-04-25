@@ -4,7 +4,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: vetra
       MYSQL_DATABASE: vetra
-      MYSQL_USER: root
       MYSQL_PASSWORD: root
     volumes:
       - db_data:/var/lib/mysql
