@@ -1,10 +1,14 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.account.models import User
 from src.account.schemas import UserLogin, UserOut, UserRegister
-from src.account.utils import hash_password, verify_password
+from src.account.utils import (
+    hash_password,
+    verify_password,
+    verify_refresh_token,
+)
 
 
 class AccountService:
@@ -42,6 +46,25 @@ class AccountService:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='Invalid credentials',
+            )
+
+        return user
+
+    async def refresh(self, request: Request):
+        token = request.cookies.get('refresh_token')
+
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='Refresh token missing',
+            )
+
+        user = await verify_refresh_token(self.session, token)
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='Invalid or expired refresh token',
             )
 
         return user

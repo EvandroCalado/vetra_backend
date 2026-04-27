@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.account.models import RefreshToken, User
@@ -73,3 +74,20 @@ def decode_token(token: str):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Invalid token',
         )
+
+
+async def verify_refresh_token(session: AsyncSession, token: str):
+    stmt = select(RefreshToken).where(RefreshToken.token == token)
+    result = await session.execute(stmt)
+    refresh_token = result.scalar_one_or_none()
+
+    if refresh_token and not refresh_token.revoked:
+        expires_at = refresh_token.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at > datetime.now(timezone.utc):
+            user_stmt = select(User).where(User.id == refresh_token.user_id)
+            user_result = await session.scalars(user_stmt)
+            return user_result.first()
+
+    return None
