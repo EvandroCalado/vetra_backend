@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.account.models import User
 from src.account.schemas import UserLogin, UserOut, UserRegister
 from src.account.utils import (
+    create_email_verification_token,
     hash_password,
+    verify_email_token_and_get_user_id,
     verify_password,
     verify_refresh_token,
 )
@@ -68,3 +70,39 @@ class AccountService:
             )
 
         return user
+
+    @staticmethod
+    async def send_email_verification(user: User):
+        token = create_email_verification_token(user.id)
+        link = f'http://localhost:8000/account/verify-email?token={token}'
+
+        print(f'Email verification link: {link}')
+
+        return {'message': 'Verification email send'}
+
+    async def verify_email(self, token: str):
+        user_id = verify_email_token_and_get_user_id(
+            token, 'email_verification'
+        )
+
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Invalid or expired token',
+            )
+
+        stmt = select(User).where(User.id == user_id)
+        result = await self.session.scalars(stmt)
+        user = result.first()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail='User not found'
+            )
+
+        user.is_verified = True
+
+        self.session.add(user)
+        await self.session.commit()
+
+        return {'message': 'Email verified successfully'}

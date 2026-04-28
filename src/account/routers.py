@@ -76,3 +76,15 @@ async def refresh(service: AccountServiceDep, request: Request):
     )
 
     return response
+
+
+@router.post('/send-email-verification/')
+async def send_email_verification(
+    service: AccountServiceDep, current_user: CurrentUserDep
+):
+    return await service.send_email_verification(current_user)
+
+
+@router.get('/verify-email/')
+async def verify_email(service: AccountServiceDep, token: str):
+    return await service.verify_email(token)

@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_TIME_MIN: int = 5
     JWT_REFRESH_TOKEN_TIME_DAY: int = 7
 
+    EMAIL_VERIFICATION_TOKEN_TIME_HOURS: int = 1
+
     model_config = SettingsConfigDict(
         env_file='.env', extra='ignore', env_file_encoding='utf-8'
     )

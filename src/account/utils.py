@@ -91,3 +91,27 @@ async def verify_refresh_token(session: AsyncSession, token: str):
             return user_result.first()
 
     return None
+
+
+def create_email_verification_token(user_id: int) -> str:
+    expires = datetime.now(timezone.utc) + timedelta(
+        hours=settings.EMAIL_VERIFICATION_TOKEN_TIME_HOURS
+    )
+    to_encode = {
+        'sub': str(user_id),
+        'exp': expires,
+        'type': 'email_verification',
+    }
+
+    return jwt.encode(
+        to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+    )
+
+
+def verify_email_token_and_get_user_id(token: str, token_type: str):
+    payload = decode_token(token)
+
+    if not payload or payload.get('type') != token_type:
+        return None
+
+    return payload.get('sub')
