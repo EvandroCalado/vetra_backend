@@ -2,7 +2,12 @@ from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
 
 from src.account.deps import AccountServiceDep, CurrentUserDep
-from src.account.schemas import UserLogin, UserOut, UserRegister
+from src.account.schemas import (
+    PasswordChange,
+    UserLogin,
+    UserOut,
+    UserRegister,
+)
 from src.account.utils import create_tokens
 
 router = APIRouter()
@@ -88,3 +93,12 @@ async def send_email_verification(
 @router.get('/verify-email/')
 async def verify_email(service: AccountServiceDep, token: str):
     return await service.verify_email(token)
+
+
+@router.post('/change-password/')
+async def change_password(
+    service: AccountServiceDep,
+    current_user: CurrentUserDep,
+    password_change: PasswordChange,
+):
+    return await service.change_password(current_user, password_change)

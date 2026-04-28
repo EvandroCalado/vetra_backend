@@ -3,7 +3,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.account.models import User
-from src.account.schemas import UserLogin, UserOut, UserRegister
+from src.account.schemas import (
+    PasswordChange,
+    UserLogin,
+    UserOut,
+    UserRegister,
+)
 from src.account.utils import (
     create_email_verification_token,
     hash_password,
@@ -106,3 +111,23 @@ class AccountService:
         await self.session.commit()
 
         return {'message': 'Email verified successfully'}
+
+    async def change_password(
+        self, user: User, password_change: PasswordChange
+    ):
+        is_valid_password = verify_password(
+            password_change.old_password, user.hashed_password
+        )
+
+        if not is_valid_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Old password is incorrect',
+            )
+
+        user.hashed_password = hash_password(password_change.new_password)
+
+        self.session.add(user)
+        await self.session.commit()
+
+        return {'message': 'Password changed successfully'}
