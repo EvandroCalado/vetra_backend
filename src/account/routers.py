@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
 
-from src.account.deps import AccountServiceDep, CurrentUserDep
+from src.account.deps import AccountServiceDep, AdminUserDep, CurrentUserDep
 from src.account.schemas import (
     PasswordChange,
     PasswordReset,
@@ -118,3 +118,8 @@ async def reset_password(
     service: AccountServiceDep, password_reset: PasswordReset
 ):
     return await service.reset_password(password_reset)
+
+
+@router.get('/admin/')
+async def admin(user: AdminUserDep):
+    return {'message': f'Hello, {user.email}! You have admin access.'}
