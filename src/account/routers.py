@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 from src.account.deps import AccountServiceDep, CurrentUserDep
 from src.account.schemas import (
     PasswordChange,
+    PasswordReset,
+    ResetPassword,
     UserLogin,
     UserOut,
     UserRegister,
@@ -102,3 +104,17 @@ async def change_password(
     password_change: PasswordChange,
 ):
     return await service.change_password(current_user, password_change)
+
+
+@router.post('/send-password-reset-email/')
+async def send_password_reset_email(
+    service: AccountServiceDep, reset_password: ResetPassword
+):
+    return await service.send_password_reset_email(reset_password)
+
+
+@router.post('/reset-password/')
+async def reset_password(
+    service: AccountServiceDep, password_reset: PasswordReset
+):
+    return await service.reset_password(password_reset)

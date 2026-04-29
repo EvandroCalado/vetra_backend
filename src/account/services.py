@@ -5,15 +5,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.account.models import User
 from src.account.schemas import (
     PasswordChange,
+    PasswordReset,
+    ResetPassword,
     UserLogin,
     UserOut,
     UserRegister,
 )
 from src.account.utils import (
     create_email_verification_token,
+    create_password_reset_token,
+    get_user_by_email,
     hash_password,
     verify_email_token_and_get_user_id,
     verify_password,
+    verify_password_reset_token_and_get_user_id,
     verify_refresh_token,
 )
 
@@ -131,3 +136,40 @@ class AccountService:
         await self.session.commit()
 
         return {'message': 'Password changed successfully'}
+
+    async def send_password_reset_email(self, reset_password: ResetPassword):
+        user = await get_user_by_email(self.session, reset_password.email)
+
+        token = create_password_reset_token(user.id)
+        link = f'http://localhost:8000/account/reset-password?token={token}'
+
+        print(f'Password reset link: {link}')
+
+        return {'message': 'Password reset email send'}
+
+    async def reset_password(self, password_reset: PasswordReset):
+        user_id = verify_password_reset_token_and_get_user_id(
+            password_reset.token, 'password_reset'
+        )
+
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Invalid or expired token',
+            )
+
+        stmt = select(User).where(User.id == user_id)
+        result = await self.session.scalars(stmt)
+        user = result.first()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail='User not found'
+            )
+
+        user.hashed_password = hash_password(password_reset.new_password)
+
+        self.session.add(user)
+        await self.session.commit()
+
+        return {'message': 'Password reset successfully'}

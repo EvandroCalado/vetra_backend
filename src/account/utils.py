@@ -115,3 +115,40 @@ def verify_email_token_and_get_user_id(token: str, token_type: str):
         return None
 
     return payload.get('sub')
+
+
+async def get_user_by_email(session: AsyncSession, email: str):
+    stmt = select(User).where(User.email == email)
+    result = await session.scalars(stmt)
+    user = result.first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='User not found'
+        )
+
+    return user
+
+
+def create_password_reset_token(user_id: int) -> str:
+    expires = datetime.now(timezone.utc) + timedelta(
+        hours=settings.EMAIL_PASSWORD_RESET_TOKEN_TIME_HOURS
+    )
+    to_encode = {
+        'sub': str(user_id),
+        'exp': expires,
+        'type': 'password_reset',
+    }
+
+    return jwt.encode(
+        to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+    )
+
+
+def verify_password_reset_token_and_get_user_id(token: str, token_type: str):
+    payload = decode_token(token)
+
+    if not payload or payload.get('type') != token_type:
+        return None
+
+    return payload.get('sub')
