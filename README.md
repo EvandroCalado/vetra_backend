@@ -48,27 +48,36 @@ Before you begin, ensure you have the following installed on your machine:
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/EvandroCalado/vetra_backend.git
 cd vetra_backend
 ```
 
 ### 2. Environment Variables
 
-Create a `.env` file in the root directory and configure your environment variables.
+Rename file `.env.example` to `.env` in the root directory and configure your environment variables.
 
 ```env
 # Database Settings
-DATABASE_URL=mysql+aiomysql://root:root@localhost:3306/vetra
+DB_USER=
+DB_PASSWORD=
+DB_NAME=
+DB_PORT=
+DB_HOST=
 
 # Security Settings
 JWT_SECRET_KEY=your_super_secret_key
 JWT_ALGORITHM=HS256
-JWT_ACCESS_TOKEN_TIME_MIN=5
+JWT_ACCESS_TOKEN_TIME_MIN=
+JWT_REFRESH_TOKEN_TIME_DAY=
+
+# Email Settings
+EMAIL_VERIFICATION_TOKEN_TIME_HOURS=
+EMAIL_PASSWORD_RESET_TOKEN_TIME_HOUR=
 ```
 
 ### 3. Start the Database
 
-The project uses Docker to run a MySQL instance.
+The project uses Docker to run a MySQL instance in development.
 
 ```bash
 docker-compose up -d
@@ -104,19 +113,31 @@ The API will be available at: **http://localhost:8000**
 
 Interactive API Documentation (Swagger UI) is automatically available at: **http://localhost:8000/docs**
 
-## 🔐 Authentication System
+## 🔐 Authentication & Security
 
 The authentication system is built with security best practices:
 
 - Passwords are securely hashed using **Argon2**.
-- Uses **JWT (JSON Web Tokens)** for stateless authentication.
+- Uses **JWT (JSON Web Tokens)** for stateless authentication, with support for **Access and Refresh Tokens**.
 - Tokens are automatically securely stored in **HTTP-only, Secure, SameSite=Lax cookies** to mitigate XSS attacks.
+- **Email Verification** system to ensure users own their provided email addresses.
+- **Password Reset** functionality using secure expiring tokens.
+- **Role-Based Access Control (RBAC)** support (e.g., Admin user roles).
+- Token revocation support for secure **Logout**.
 
 ### Available Endpoints
 
 - `POST /account/register/` - Register a new user.
 - `POST /account/login/` - Authenticate user and set HTTP-only cookies with JWT tokens.
+- `POST /account/refresh/` - Refresh the JWT access token using the refresh token cookie.
+- `POST /account/send-email-verification/` - Send an email verification link to the user.
+- `POST /account/change-password/` - Change the password for the currently authenticated user.
+- `POST /account/send-password-reset-email/` - Send a password reset link to the user's email.
+- `POST /account/reset-password/` - Reset the user's password using a token.
+- `POST /account/logout/` - Revoke tokens and clear HTTP-only cookies.
 - `GET /account/me/` - Retrieve details of the currently authenticated user (Protected endpoint).
+- `GET /account/verify-email/` - Verify the user's email address using a token.
+- `GET /account/admin/` - Retrieve admin-only data (Requires admin privileges).
 
 ## 📜 Available Scripts (Taskipy)
 
