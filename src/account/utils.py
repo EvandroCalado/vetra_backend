@@ -152,3 +152,13 @@ def verify_password_reset_token_and_get_user_id(token: str, token_type: str):
         return None
 
     return payload.get('sub')
+
+
+async def revoke_refresh_token(session: AsyncSession, token: str):
+    stmt = select(RefreshToken).where(RefreshToken.token == token)
+    result = await session.execute(stmt)
+    refresh_token = result.scalar_one_or_none()
+
+    if refresh_token:
+        refresh_token.revoked = True
+        await session.commit()

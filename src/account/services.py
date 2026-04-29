@@ -1,4 +1,5 @@
 from fastapi import HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +17,7 @@ from src.account.utils import (
     create_password_reset_token,
     get_user_by_email,
     hash_password,
+    revoke_refresh_token,
     verify_email_token_and_get_user_id,
     verify_password,
     verify_password_reset_token_and_get_user_id,
@@ -173,3 +175,15 @@ class AccountService:
         await self.session.commit()
 
         return {'message': 'Password reset successfully'}
+
+    async def logout(self, request: Request, user: User):
+        refresh_token = request.cookies.get('refresh_token')
+
+        if refresh_token:
+            await revoke_refresh_token(self.session, refresh_token)
+
+        response = JSONResponse(content={'message': 'Logout successful'})
+        response.delete_cookie('access_token')
+        response.delete_cookie('refresh_token')
+
+        return response

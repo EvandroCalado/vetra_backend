@@ -123,3 +123,10 @@ async def reset_password(
 @router.get('/admin/')
 async def admin(user: AdminUserDep):
     return {'message': f'Hello, {user.email}! You have admin access.'}
+
+
+@router.post('/logout/')
+async def logout(
+    service: AccountServiceDep, request: Request, user: CurrentUserDep
+):
+    return await service.logout(request, user)
