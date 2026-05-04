@@ -1,6 +1,7 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from src.account.email import EmailProvider
 from src.account.exceptions import (
     InvalidCredentialsError,
     InvalidOrExpiredTokenError,
@@ -35,9 +36,11 @@ class AccountService:
         self,
         user_repository: UserRepository,
         token_repository: TokenRepository,
+        email_provider: EmailProvider,
     ):
         self.user_repository = user_repository
         self.token_repository = token_repository
+        self.email_provider = email_provider
 
     async def register(self, user: UserRegister) -> UserOut:
         existing_user = await self.user_repository.get_by_email(user.email)
@@ -74,14 +77,13 @@ class AccountService:
 
         return user
 
-    @staticmethod
-    async def send_email_verification(user: User):
+    async def send_email_verification(self, user: User):
         token = create_email_verification_token(user.id)
         link = (
             f'http://localhost:8000/api/v1/account/verify-email?token={token}'
         )
 
-        print(f'Email verification link: {link}')
+        await self.email_provider.send_verification_email(user.email, link)
 
         return {'message': 'Verification email send'}
 
@@ -129,7 +131,7 @@ class AccountService:
         token = create_password_reset_token(user.id)
         link = f'http://localhost:8000/api/v1/account/reset-password?token={token}'
 
-        print(f'Password reset link: {link}')
+        await self.email_provider.send_password_reset_email(user.email, link)
 
         return {'message': 'Password reset email send'}
 

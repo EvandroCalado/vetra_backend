@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
 
+from src.account.email import ConsoleEmailProvider, EmailProvider
 from src.account.models import User
 from src.account.repositories import TokenRepository, UserRepository
 from src.account.services import AccountService
@@ -19,10 +20,16 @@ def get_token_repository(session: SessionDep) -> TokenRepository:
     return TokenRepository(session)
 
 
+def get_email_provider() -> EmailProvider:
+    return ConsoleEmailProvider()
+
+
 def get_account_service(
-    user_repo: UserRepositoryDep, token_repo: TokenRepositoryDep
+    user_repo: UserRepositoryDep,
+    token_repo: TokenRepositoryDep,
+    email_provider: EmailProviderDep,
 ) -> AccountService:
-    return AccountService(user_repo, token_repo)
+    return AccountService(user_repo, token_repo, email_provider)
 
 
 async def get_current_user(
@@ -81,6 +88,7 @@ async def required_admin(
 
 UserRepositoryDep = Annotated[UserRepository, Depends(get_user_repository)]
 TokenRepositoryDep = Annotated[TokenRepository, Depends(get_token_repository)]
+EmailProviderDep = Annotated[EmailProvider, Depends(get_email_provider)]
 AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
 AdminUserDep = Annotated[User, Depends(required_admin)]
