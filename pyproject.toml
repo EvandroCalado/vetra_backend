@@ -17,6 +17,10 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.15.11",
     "taskipy>=1.14.1",
     "types-passlib>=1.7.7.20260211",
@@ -52,3 +56,18 @@ lint = 'ruff check'
 pre_format = 'ruff check --fix'
 format = 'ruff format'
 dev = 'fastapi dev src/main.py'
+test = 'pytest -v'
+test_cov = 'pytest --cov=src --cov-report=term-missing -v'
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+filterwarnings = [
+    "ignore:'crypt' is deprecated:DeprecationWarning",
+    "ignore:Accessing argon2.__version__ is deprecated:DeprecationWarning",
+    "ignore:'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated:DeprecationWarning",
+]
+
+[tool.coverage.run]
+concurrency = ["greenlet", "thread"]

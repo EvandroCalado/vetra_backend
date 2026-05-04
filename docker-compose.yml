@@ -10,5 +10,14 @@ services:
     ports:
       - 3306:3306
 
+  vetra_test_db:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: vetra
+      MYSQL_DATABASE: vetra_test
+      MYSQL_PASSWORD: root
+    ports:
+      - 3307:3306
+
 volumes:
   db_data:
