@@ -3,11 +3,10 @@ from datetime import datetime, timedelta, timezone
 
 from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.account.exceptions import UserNotFoundError
-from src.account.models import RefreshToken, User
+from src.account.models import User
+from src.account.repositories import TokenRepository, UserRepository
 from src.db.settings import settings
 
 pwd_context = CryptContext(schemes=['argon2'], deprecated='auto')
@@ -33,7 +32,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     )
 
 
-async def create_tokens(session: AsyncSession, user: User):
+async def create_tokens(token_repo: TokenRepository, user: User):
     access_token = create_access_token(data={'sub': str(user.id)})
 
     refresh_token_key = str(uuid.uuid4())
@@ -41,14 +40,7 @@ async def create_tokens(session: AsyncSession, user: User):
         days=settings.JWT_REFRESH_TOKEN_TIME_DAY
     )
 
-    refresh_token = RefreshToken(
-        user_id=user.id,
-        token=refresh_token_key,
-        expires_at=refresh_token_expires,
-    )
-
-    session.add(refresh_token)
-    await session.commit()
+    await token_repo.create(user.id, refresh_token_key, refresh_token_expires)
 
     return {
         'access_token': access_token,
@@ -68,19 +60,18 @@ def decode_token(token: str) -> dict | None:
         return None
 
 
-async def verify_refresh_token(session: AsyncSession, token: str):
-    stmt = select(RefreshToken).where(RefreshToken.token == token)
-    result = await session.execute(stmt)
-    refresh_token = result.scalar_one_or_none()
+async def verify_refresh_token(
+    token_repo: TokenRepository, token: str
+) -> User | None:
+    refresh_token = await token_repo.get_by_token(token)
 
     if refresh_token and not refresh_token.revoked:
         expires_at = refresh_token.expires_at
         if expires_at.tzinfo is None:
             expires_at = expires_at.replace(tzinfo=timezone.utc)
         if expires_at > datetime.now(timezone.utc):
-            user_stmt = select(User).where(User.id == refresh_token.user_id)
-            user_result = await session.scalars(user_stmt)
-            return user_result.first()
+            user = await token_repo.session.get(User, refresh_token.user_id)
+            return user
 
     return None
 
@@ -109,10 +100,8 @@ def verify_email_token_and_get_user_id(token: str, token_type: str):
     return payload.get('sub')
 
 
-async def get_user_by_email(session: AsyncSession, email: str) -> User:
-    stmt = select(User).where(User.email == email)
-    result = await session.scalars(stmt)
-    user = result.first()
+async def get_user_by_email(user_repo: UserRepository, email: str) -> User:
+    user = await user_repo.get_by_email(email)
 
     if not user:
         raise UserNotFoundError('User not found')
@@ -144,11 +133,7 @@ def verify_password_reset_token_and_get_user_id(token: str, token_type: str):
     return payload.get('sub')
 
 
-async def revoke_refresh_token(session: AsyncSession, token: str):
-    stmt = select(RefreshToken).where(RefreshToken.token == token)
-    result = await session.execute(stmt)
-    refresh_token = result.scalar_one_or_none()
-
-    if refresh_token:
-        refresh_token.revoked = True
-        await session.commit()
+async def revoke_refresh_token(
+    token_repo: TokenRepository, token: str
+) -> bool:
+    return await token_repo.revoke(token)

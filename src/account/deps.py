@@ -1,19 +1,33 @@
+from __future__ import annotations
+
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
-from sqlalchemy import select
 
 from src.account.models import User
+from src.account.repositories import TokenRepository, UserRepository
 from src.account.services import AccountService
 from src.account.utils import decode_token
 from src.db.config import SessionDep
 
 
-def get_account_service(session: SessionDep) -> AccountService:
-    return AccountService(session)
+def get_user_repository(session: SessionDep) -> UserRepository:
+    return UserRepository(session)
 
 
-async def get_current_user(session: SessionDep, request: Request):
+def get_token_repository(session: SessionDep) -> TokenRepository:
+    return TokenRepository(session)
+
+
+def get_account_service(
+    user_repo: UserRepositoryDep, token_repo: TokenRepositoryDep
+) -> AccountService:
+    return AccountService(user_repo, token_repo)
+
+
+async def get_current_user(
+    session: SessionDep, user_repo: UserRepositoryDep, request: Request
+):
     token = request.cookies.get('access_token')
 
     if not token:
@@ -41,9 +55,7 @@ async def get_current_user(session: SessionDep, request: Request):
             headers={'WWW-Authenticate': 'Bearer'},
         )
 
-    stmt = select(User).where(User.id == int(user_id))
-    result = await session.scalars(stmt)
-    user = result.first()
+    user = await user_repo.get_by_id(int(user_id))
 
     if not user:
         raise HTTPException(
@@ -67,6 +79,8 @@ async def required_admin(
     return user
 
 
+UserRepositoryDep = Annotated[UserRepository, Depends(get_user_repository)]
+TokenRepositoryDep = Annotated[TokenRepository, Depends(get_token_repository)]
 AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
 AdminUserDep = Annotated[User, Depends(required_admin)]

@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
 
-from src.account.deps import AccountServiceDep, AdminUserDep, CurrentUserDep
+from src.account.deps import (
+    AccountServiceDep,
+    AdminUserDep,
+    CurrentUserDep,
+)
 from src.account.schemas import (
     PasswordChange,
     PasswordReset,
@@ -26,7 +30,7 @@ async def register(service: AccountServiceDep, user: UserRegister):
 async def login(service: AccountServiceDep, user_login: UserLogin):
     user = await service.login(user_login)
 
-    tokens = await create_tokens(service.session, user)
+    tokens = await create_tokens(service.token_repository, user)
 
     response = JSONResponse(content={'message': 'Login successful'})
 
@@ -60,7 +64,7 @@ async def me(current_user: CurrentUserDep):
 async def refresh(service: AccountServiceDep, request: Request):
     user = await service.refresh(request)
 
-    tokens = await create_tokens(service.session, user)
+    tokens = await create_tokens(service.token_repository, user)
 
     response = JSONResponse(content={'message': 'Refresh successful'})
 

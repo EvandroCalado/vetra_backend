@@ -1,7 +1,5 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.account.exceptions import (
     InvalidCredentialsError,
@@ -12,6 +10,7 @@ from src.account.exceptions import (
     UserNotFoundError,
 )
 from src.account.models import User
+from src.account.repositories import TokenRepository, UserRepository
 from src.account.schemas import (
     PasswordChange,
     PasswordReset,
@@ -23,9 +22,7 @@ from src.account.schemas import (
 from src.account.utils import (
     create_email_verification_token,
     create_password_reset_token,
-    get_user_by_email,
     hash_password,
-    revoke_refresh_token,
     verify_email_token_and_get_user_id,
     verify_password,
     verify_password_reset_token_and_get_user_id,
@@ -34,30 +31,28 @@ from src.account.utils import (
 
 
 class AccountService:
-    def __init__(self, session: AsyncSession):
-        self.session = session
+    def __init__(
+        self,
+        user_repository: UserRepository,
+        token_repository: TokenRepository,
+    ):
+        self.user_repository = user_repository
+        self.token_repository = token_repository
 
     async def register(self, user: UserRegister) -> UserOut:
-        stmt = select(User).where(User.email == user.email)
-        result = await self.session.execute(stmt)
+        existing_user = await self.user_repository.get_by_email(user.email)
 
-        if result.first():
+        if existing_user:
             raise UserAlreadyExistsError('Email already registered')
 
-        new_user = User(
-            email=user.email, hashed_password=hash_password(user.password)
+        new_user = await self.user_repository.create(
+            user.email, hash_password(user.password)
         )
-
-        self.session.add(new_user)
-        await self.session.commit()
-        await self.session.refresh(new_user)
 
         return UserOut.model_validate(new_user)
 
     async def login(self, user_login: UserLogin) -> User:
-        stmt = select(User).where(User.email == user_login.email)
-        result = await self.session.scalars(stmt)
-        user = result.first()
+        user = await self.user_repository.get_by_email(user_login.email)
 
         if not user or not verify_password(
             user_login.password, user.hashed_password
@@ -72,7 +67,7 @@ class AccountService:
         if not token:
             raise RefreshTokenMissingError('Refresh token missing')
 
-        user = await verify_refresh_token(self.session, token)
+        user = await verify_refresh_token(self.token_repository, token)
 
         if not user:
             raise InvalidCredentialsError('Invalid or expired refresh token')
@@ -98,17 +93,14 @@ class AccountService:
         if not user_id:
             raise InvalidOrExpiredTokenError('Invalid or expired token')
 
-        stmt = select(User).where(User.id == user_id)
-        result = await self.session.scalars(stmt)
-        user = result.first()
+        user = await self.user_repository.get_by_id(int(user_id))
 
         if not user:
             raise UserNotFoundError('User not found')
 
         user.is_verified = True
 
-        self.session.add(user)
-        await self.session.commit()
+        await self.user_repository.save(user)
 
         return {'message': 'Email verified successfully'}
 
@@ -124,13 +116,15 @@ class AccountService:
 
         user.hashed_password = hash_password(password_change.new_password)
 
-        self.session.add(user)
-        await self.session.commit()
+        await self.user_repository.save(user)
 
         return {'message': 'Password changed successfully'}
 
     async def send_password_reset_email(self, reset_password: ResetPassword):
-        user = await get_user_by_email(self.session, reset_password.email)
+        user = await self.user_repository.get_by_email(reset_password.email)
+
+        if not user:
+            raise UserNotFoundError('User not found')
 
         token = create_password_reset_token(user.id)
         link = f'http://localhost:8000/api/v1/account/reset-password?token={token}'
@@ -147,17 +141,14 @@ class AccountService:
         if not user_id:
             raise InvalidOrExpiredTokenError('Invalid or expired token')
 
-        stmt = select(User).where(User.id == user_id)
-        result = await self.session.scalars(stmt)
-        user = result.first()
+        user = await self.user_repository.get_by_id(int(user_id))
 
         if not user:
             raise UserNotFoundError('User not found')
 
         user.hashed_password = hash_password(password_reset.new_password)
 
-        self.session.add(user)
-        await self.session.commit()
+        await self.user_repository.save(user)
 
         return {'message': 'Password reset successfully'}
 
@@ -165,7 +156,7 @@ class AccountService:
         refresh_token = request.cookies.get('refresh_token')
 
         if refresh_token:
-            await revoke_refresh_token(self.session, refresh_token)
+            await self.token_repository.revoke(refresh_token)
 
         response = JSONResponse(content={'message': 'Logout successful'})
         response.delete_cookie('access_token')

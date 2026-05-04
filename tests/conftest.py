@@ -1,13 +1,13 @@
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from src.db.base import Base
 from src.db.config import get_db
-
-# Importando models para garantir que eles sejam registrados no Base.metadata
 from src.db.models import *  # noqa
 from src.main import app
+
 
 # Utilizaremos o banco de dados configurado no docker-compose.yml
 DATABASE_URL_TEST = 'mysql+aiomysql://root:vetra@localhost:3307/vetra_test'
