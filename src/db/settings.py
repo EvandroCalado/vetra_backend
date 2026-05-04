@@ -1,3 +1,4 @@
+from pydantic import computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,6 +18,14 @@ class Settings(BaseSettings):
     EMAIL_PASSWORD_RESET_TOKEN_TIME_HOURS: int = 2
 
     ALLOWED_ORIGINS: list[str] = ['http://localhost:3000']
+
+    @computed_field
+    @property
+    def DATABASE_URL(self) -> str:
+        return (
+            f'mysql+aiomysql://{self.DB_USER}:{self.DB_PASSWORD}'
+            f'@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}'
+        )
 
     model_config = SettingsConfigDict(
         env_file='.env', extra='ignore', env_file_encoding='utf-8'
