@@ -11,17 +11,17 @@ async def test_logout_success(client: AsyncClient):
     }
 
     # Pre-register user
-    await client.post('/account/register/', json=payload)
+    await client.post('/api/v1/account/register/', json=payload)
 
     # Login to get access token and refresh token
-    login_response = await client.post('/account/login/', json=payload)
+    login_response = await client.post('/api/v1/account/login/', json=payload)
     assert login_response.status_code == status.HTTP_200_OK
 
     # Capture the refresh token before logout
     refresh_token = client.cookies.get('refresh_token')
 
     # Call the logout endpoint
-    response = await client.post('/account/logout/')
+    response = await client.post('/api/v1/account/logout/')
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {'message': 'Logout successful'}
@@ -33,7 +33,7 @@ async def test_logout_success(client: AsyncClient):
     # Verify the refresh token is actually revoked in the database
     # by trying to use it in the /refresh/ endpoint
     client.cookies.set('refresh_token', refresh_token)
-    refresh_response = await client.post('/account/refresh/')
+    refresh_response = await client.post('/api/v1/account/refresh/')
 
     assert refresh_response.status_code == status.HTTP_401_UNAUTHORIZED
     assert refresh_response.json() == {
@@ -44,7 +44,7 @@ async def test_logout_success(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_logout_unauthorized(client: AsyncClient):
     # Attempt to logout without being logged in (no cookies)
-    response = await client.post('/account/logout/')
+    response = await client.post('/api/v1/account/logout/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Missing access token'}

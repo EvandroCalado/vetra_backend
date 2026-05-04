@@ -20,7 +20,7 @@ async def test_get_current_user_empty_payload(client: AsyncClient):
     token = generate_custom_token({})
     client.cookies.set('access_token', token)
 
-    response = await client.get('/account/me/')
+    response = await client.get('/api/v1/account/me/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Invalid or expired token'}
@@ -33,7 +33,7 @@ async def test_get_current_user_no_sub(client: AsyncClient):
     token = generate_custom_token({'exp': expires})
     client.cookies.set('access_token', token)
 
-    response = await client.get('/account/me/')
+    response = await client.get('/api/v1/account/me/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Invalid token'}
@@ -46,7 +46,7 @@ async def test_get_current_user_not_found(client: AsyncClient):
     token = generate_custom_token({'sub': '99999', 'exp': expires})
     client.cookies.set('access_token', token)
 
-    response = await client.get('/account/me/')
+    response = await client.get('/api/v1/account/me/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Invalid token'}

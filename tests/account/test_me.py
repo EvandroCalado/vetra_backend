@@ -13,14 +13,14 @@ async def test_me_success(client: AsyncClient):
     payload = {'email': 'me_test@example.com', 'password': 'StrongPassword123'}
 
     # Pre-register user
-    await client.post('/account/register/', json=payload)
+    await client.post('/api/v1/account/register/', json=payload)
 
     # Attempt login
-    login_response = await client.post('/account/login/', json=payload)
+    login_response = await client.post('/api/v1/account/login/', json=payload)
     assert login_response.status_code == status.HTTP_200_OK
 
     # client automatically stores cookies (including access_token)
-    response = await client.get('/account/me/')
+    response = await client.get('/api/v1/account/me/')
 
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -32,7 +32,7 @@ async def test_me_success(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_me_unauthorized_missing_token(client: AsyncClient):
     # Call /me/ without any cookies
-    response = await client.get('/account/me/')
+    response = await client.get('/api/v1/account/me/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Missing access token'}
@@ -41,7 +41,7 @@ async def test_me_unauthorized_missing_token(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_me_invalid_token(client: AsyncClient):
     client.cookies.set('access_token', 'fake.invalid.token')
-    response = await client.get('/account/me/')
+    response = await client.get('/api/v1/account/me/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Invalid token'}
@@ -58,7 +58,7 @@ async def test_me_expired_token(client: AsyncClient):
     )
 
     client.cookies.set('access_token', expired_token)
-    response = await client.get('/account/me/')
+    response = await client.get('/api/v1/account/me/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Token has expired'}

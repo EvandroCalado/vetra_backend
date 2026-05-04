@@ -11,10 +11,10 @@ async def test_change_password_success(client: AsyncClient):
     }
 
     # Pre-register user
-    await client.post('/account/register/', json=payload)
+    await client.post('/api/v1/account/register/', json=payload)
 
     # Attempt login to get access token
-    await client.post('/account/login/', json=payload)
+    await client.post('/api/v1/account/login/', json=payload)
 
     # Change password
     change_payload = {
@@ -22,7 +22,7 @@ async def test_change_password_success(client: AsyncClient):
         'new_password': 'NewStrongPassword456',
     }
     response = await client.post(
-        '/account/change-password/', json=change_payload
+        '/api/v1/account/change-password/', json=change_payload
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -34,7 +34,7 @@ async def test_change_password_success(client: AsyncClient):
         'password': 'NewStrongPassword456',
     }
     new_login_response = await client.post(
-        '/account/login/', json=new_login_payload
+        '/api/v1/account/login/', json=new_login_payload
     )
     assert new_login_response.status_code == status.HTTP_200_OK
 
@@ -46,7 +46,7 @@ async def test_change_password_unauthorized(client: AsyncClient):
         'new_password': 'NewStrongPassword456',
     }
     response = await client.post(
-        '/account/change-password/', json=change_payload
+        '/api/v1/account/change-password/', json=change_payload
     )
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -61,8 +61,8 @@ async def test_change_password_wrong_old_password(client: AsyncClient):
     }
 
     # Pre-register user and login
-    await client.post('/account/register/', json=payload)
-    await client.post('/account/login/', json=payload)
+    await client.post('/api/v1/account/register/', json=payload)
+    await client.post('/api/v1/account/login/', json=payload)
 
     # Change password with wrong old password
     change_payload = {
@@ -70,7 +70,7 @@ async def test_change_password_wrong_old_password(client: AsyncClient):
         'new_password': 'NewStrongPassword456',
     }
     response = await client.post(
-        '/account/change-password/', json=change_payload
+        '/api/v1/account/change-password/', json=change_payload
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -96,8 +96,8 @@ async def test_change_password_invalid_new_password(
     }
 
     # Pre-register user and login
-    await client.post('/account/register/', json=payload)
-    await client.post('/account/login/', json=payload)
+    await client.post('/api/v1/account/register/', json=payload)
+    await client.post('/api/v1/account/login/', json=payload)
 
     # Change password with invalid new password
     change_payload = {
@@ -105,7 +105,7 @@ async def test_change_password_invalid_new_password(
         'new_password': invalid_password,
     }
     response = await client.post(
-        '/account/change-password/', json=change_payload
+        '/api/v1/account/change-password/', json=change_payload
     )
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

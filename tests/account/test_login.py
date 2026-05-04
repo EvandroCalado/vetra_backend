@@ -11,10 +11,10 @@ async def test_login_success(client: AsyncClient):
     }
 
     # Pre-register user
-    await client.post('/account/register/', json=payload)
+    await client.post('/api/v1/account/register/', json=payload)
 
     # Attempt login
-    response = await client.post('/account/login/', json=payload)
+    response = await client.post('/api/v1/account/login/', json=payload)
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {'message': 'Login successful'}
@@ -33,14 +33,14 @@ async def test_login_invalid_password(client: AsyncClient):
     }
 
     # Pre-register user
-    await client.post('/account/register/', json=payload)
+    await client.post('/api/v1/account/register/', json=payload)
 
     # Attempt login with wrong password
     wrong_payload = {
         'email': 'login_wrongpass@example.com',
         'password': 'WrongPassword123',
     }
-    response = await client.post('/account/login/', json=wrong_payload)
+    response = await client.post('/api/v1/account/login/', json=wrong_payload)
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Invalid credentials'}
@@ -54,7 +54,7 @@ async def test_login_nonexistent_user(client: AsyncClient):
     }
 
     # Attempt login without registering
-    response = await client.post('/account/login/', json=payload)
+    response = await client.post('/api/v1/account/login/', json=payload)
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Invalid credentials'}
@@ -64,7 +64,7 @@ async def test_login_nonexistent_user(client: AsyncClient):
 async def test_login_missing_fields(client: AsyncClient):
     # Attempt login with missing password
     payload = {'email': 'missing@example.com'}
-    response = await client.post('/account/login/', json=payload)
+    response = await client.post('/api/v1/account/login/', json=payload)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     data = response.json()

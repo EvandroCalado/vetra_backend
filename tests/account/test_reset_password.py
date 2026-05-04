@@ -17,7 +17,7 @@ async def test_reset_password_success(client: AsyncClient):
     }
 
     # Pre-register user to get the ID
-    register_response = await client.post('/account/register/', json=payload)
+    register_response = await client.post('/api/v1/account/register/', json=payload)
     assert register_response.status_code == status.HTTP_201_CREATED
     user_id = register_response.json()['id']
 
@@ -27,7 +27,7 @@ async def test_reset_password_success(client: AsyncClient):
     # Call the reset password endpoint
     reset_payload = {'token': token, 'new_password': 'NewStrongPassword456'}
     response = await client.post(
-        '/account/reset-password/', json=reset_payload
+        '/api/v1/account/reset-password/', json=reset_payload
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -39,7 +39,7 @@ async def test_reset_password_success(client: AsyncClient):
         'password': 'NewStrongPassword456',
     }
     new_login_response = await client.post(
-        '/account/login/', json=new_login_payload
+        '/api/v1/account/login/', json=new_login_payload
     )
     assert new_login_response.status_code == status.HTTP_200_OK
 
@@ -51,7 +51,7 @@ async def test_reset_password_invalid_token(client: AsyncClient):
         'new_password': 'NewStrongPassword456',
     }
     response = await client.post(
-        '/account/reset-password/', json=reset_payload
+        '/api/v1/account/reset-password/', json=reset_payload
     )
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -65,7 +65,7 @@ async def test_reset_password_user_not_found(client: AsyncClient):
 
     reset_payload = {'token': token, 'new_password': 'NewStrongPassword456'}
     response = await client.post(
-        '/account/reset-password/', json=reset_payload
+        '/api/v1/account/reset-password/', json=reset_payload
     )
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -91,7 +91,7 @@ async def test_reset_password_invalid_new_password(
     }
 
     # Pre-register user
-    register_response = await client.post('/account/register/', json=payload)
+    register_response = await client.post('/api/v1/account/register/', json=payload)
     user_id = register_response.json()['id']
     token = create_password_reset_token(user_id)
 
@@ -101,7 +101,7 @@ async def test_reset_password_invalid_new_password(
         'new_password': invalid_password,
     }
     response = await client.post(
-        '/account/reset-password/', json=reset_payload
+        '/api/v1/account/reset-password/', json=reset_payload
     )
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -125,7 +125,7 @@ async def test_reset_password_wrong_token_type(client: AsyncClient):
         'new_password': 'NewStrongPassword123',
     }
     response = await client.post(
-        '/account/reset-password/', json=reset_payload
+        '/api/v1/account/reset-password/', json=reset_payload
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST

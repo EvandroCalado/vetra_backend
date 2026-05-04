@@ -11,14 +11,14 @@ async def test_send_email_verification_success(client: AsyncClient):
     }
 
     # Pre-register user
-    await client.post('/account/register/', json=payload)
+    await client.post('/api/v1/account/register/', json=payload)
 
     # Attempt login to get access token
-    login_response = await client.post('/account/login/', json=payload)
+    login_response = await client.post('/api/v1/account/login/', json=payload)
     assert login_response.status_code == status.HTTP_200_OK
 
     # Client automatically stores cookies, so we can directly call the endpoint
-    response = await client.post('/account/send-email-verification/')
+    response = await client.post('/api/v1/account/send-email-verification/')
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {'message': 'Verification email send'}
@@ -27,7 +27,7 @@ async def test_send_email_verification_success(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_send_email_verification_unauthorized(client: AsyncClient):
     # Call endpoint without any cookies
-    response = await client.post('/account/send-email-verification/')
+    response = await client.post('/api/v1/account/send-email-verification/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Missing access token'}

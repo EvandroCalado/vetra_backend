@@ -11,15 +11,15 @@ async def test_refresh_success(client: AsyncClient):
     }
 
     # Pre-register user
-    await client.post('/account/register/', json=payload)
+    await client.post('/api/v1/account/register/', json=payload)
 
     # Attempt login to get tokens
-    login_response = await client.post('/account/login/', json=payload)
+    login_response = await client.post('/api/v1/account/login/', json=payload)
     assert login_response.status_code == status.HTTP_200_OK
 
     # Call refresh endpoint
     # The client automatically sends the cookies (refresh_token)
-    response = await client.post('/account/refresh/')
+    response = await client.post('/api/v1/account/refresh/')
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {'message': 'Refresh successful'}
@@ -33,7 +33,7 @@ async def test_refresh_success(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_refresh_missing_token(client: AsyncClient):
     # Call /refresh/ without any cookies
-    response = await client.post('/account/refresh/')
+    response = await client.post('/api/v1/account/refresh/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Refresh token missing'}
@@ -44,7 +44,7 @@ async def test_refresh_invalid_token(client: AsyncClient):
     # Set a fake refresh token
     client.cookies.set('refresh_token', 'fake-uuid-or-invalid-token')
 
-    response = await client.post('/account/refresh/')
+    response = await client.post('/api/v1/account/refresh/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Invalid or expired refresh token'}

@@ -11,12 +11,12 @@ async def test_send_password_reset_email_success(client: AsyncClient):
     }
 
     # Pre-register user
-    await client.post('/account/register/', json=payload)
+    await client.post('/api/v1/account/register/', json=payload)
 
     # Request password reset email
     reset_payload = {'email': payload['email']}
     response = await client.post(
-        '/account/send-password-reset-email/', json=reset_payload
+        '/api/v1/account/send-password-reset-email/', json=reset_payload
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -27,7 +27,7 @@ async def test_send_password_reset_email_success(client: AsyncClient):
 async def test_send_password_reset_email_not_found(client: AsyncClient):
     reset_payload = {'email': 'nonexistent_user@example.com'}
     response = await client.post(
-        '/account/send-password-reset-email/', json=reset_payload
+        '/api/v1/account/send-password-reset-email/', json=reset_payload
     )
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -38,7 +38,7 @@ async def test_send_password_reset_email_not_found(client: AsyncClient):
 async def test_send_password_reset_email_invalid_payload(client: AsyncClient):
     reset_payload = {'email': 'invalid-email-format'}
     response = await client.post(
-        '/account/send-password-reset-email/', json=reset_payload
+        '/api/v1/account/send-password-reset-email/', json=reset_payload
     )
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

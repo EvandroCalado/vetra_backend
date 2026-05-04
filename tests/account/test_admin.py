@@ -15,7 +15,7 @@ async def test_admin_success(client: AsyncClient):
     }
 
     # Pre-register user
-    await client.post('/account/register/', json=payload)
+    await client.post('/api/v1/account/register/', json=payload)
 
     # Make user an admin directly in the test database
     async with async_session_test() as session:
@@ -27,10 +27,10 @@ async def test_admin_success(client: AsyncClient):
         await session.commit()
 
     # Login to get access token
-    await client.post('/account/login/', json=payload)
+    await client.post('/api/v1/account/login/', json=payload)
 
     # Call the admin endpoint
-    response = await client.get('/account/admin/')
+    response = await client.get('/api/v1/account/admin/')
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {
@@ -46,11 +46,11 @@ async def test_admin_forbidden(client: AsyncClient):
     }
 
     # Register and login a normal user
-    await client.post('/account/register/', json=payload)
-    await client.post('/account/login/', json=payload)
+    await client.post('/api/v1/account/register/', json=payload)
+    await client.post('/api/v1/account/login/', json=payload)
 
     # Attempt to access the admin endpoint
-    response = await client.get('/account/admin/')
+    response = await client.get('/api/v1/account/admin/')
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {'detail': 'Admin privileges required'}
@@ -59,7 +59,7 @@ async def test_admin_forbidden(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_admin_unauthorized(client: AsyncClient):
     # Attempt to access without logging in
-    response = await client.get('/account/admin/')
+    response = await client.get('/api/v1/account/admin/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Missing access token'}

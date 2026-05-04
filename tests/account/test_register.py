@@ -9,7 +9,7 @@ async def test_register_success(client: AsyncClient):
         'email': 'testuser@example.com',
         'password': 'StrongPassword123',
     }
-    response = await client.post('/account/register/', json=payload)
+    response = await client.post('/api/v1/account/register/', json=payload)
 
     assert response.status_code == status.HTTP_201_CREATED
     data = response.json()
@@ -30,11 +30,11 @@ async def test_register_existing_email(client: AsyncClient):
     }
 
     # First registration should succeed
-    response = await client.post('/account/register/', json=payload)
+    response = await client.post('/api/v1/account/register/', json=payload)
     assert response.status_code == status.HTTP_201_CREATED
 
     # Second registration with the same email should fail
-    response_duplicate = await client.post('/account/register/', json=payload)
+    response_duplicate = await client.post('/api/v1/account/register/', json=payload)
     assert response_duplicate.status_code == status.HTTP_409_CONFLICT
     assert response_duplicate.json() == {'detail': 'Email already registered'}
 
@@ -42,7 +42,7 @@ async def test_register_existing_email(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_register_invalid_email(client: AsyncClient):
     payload = {'email': 'not-an-email', 'password': 'StrongPassword123'}
-    response = await client.post('/account/register/', json=payload)
+    response = await client.post('/api/v1/account/register/', json=payload)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     data = response.json()
@@ -53,7 +53,7 @@ async def test_register_invalid_email(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_register_missing_fields(client: AsyncClient):
     payload = {'email': 'missingpassword@example.com'}
-    response = await client.post('/account/register/', json=payload)
+    response = await client.post('/api/v1/account/register/', json=payload)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     data = response.json()

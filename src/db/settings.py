@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     EMAIL_VERIFICATION_TOKEN_TIME_HOURS: int = 1
     EMAIL_PASSWORD_RESET_TOKEN_TIME_HOURS: int = 2
 
+    ALLOWED_ORIGINS: list[str] = ['http://localhost:3000']
+
     model_config = SettingsConfigDict(
         env_file='.env', extra='ignore', env_file_encoding='utf-8'
     )

@@ -86,7 +86,9 @@ class AccountService:
     @staticmethod
     async def send_email_verification(user: User):
         token = create_email_verification_token(user.id)
-        link = f'http://localhost:8000/account/verify-email?token={token}'
+        link = (
+            f'http://localhost:8000/api/v1/account/verify-email?token={token}'
+        )
 
         print(f'Email verification link: {link}')
 
@@ -143,7 +145,7 @@ class AccountService:
         user = await get_user_by_email(self.session, reset_password.email)
 
         token = create_password_reset_token(user.id)
-        link = f'http://localhost:8000/account/reset-password?token={token}'
+        link = f'http://localhost:8000/api/v1/account/reset-password?token={token}'
 
         print(f'Password reset link: {link}')
 
