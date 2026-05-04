@@ -26,8 +26,12 @@ vetra_backend/
 │   │   ├── schemas.py    # Pydantic models for request/response validation
 │   │   ├── models.py     # SQLAlchemy models (User)
 │   │   ├── deps.py       # FastAPI dependencies (auth guards, DB session)
-│   │   └── utils.py      # Utility functions (JWT token generation, hashing)
+│   │   ├── utils.py      # Utility functions (JWT token generation, hashing)
+│   │   ├── repositories.py  # Repository pattern for User and Token data access
+│   │   ├── email.py      # EmailProvider interface and implementations
+│   │   └── exceptions.py    # Custom domain exceptions and handlers
 │   ├── db/               # Database configuration and connection setup
+│   │   └── settings.py   # Pydantic settings with database URL construction
 │   └── main.py           # FastAPI application entry point
 ├── migrations/           # Alembic database migration scripts
 ├── docker-compose.yml    # Docker configuration for MySQL database
@@ -144,17 +148,17 @@ The authentication system is built with security best practices:
 
 ### Available Endpoints
 
-- `POST /account/register/` - Register a new user.
-- `POST /account/login/` - Authenticate user and set HTTP-only cookies with JWT tokens.
-- `POST /account/refresh/` - Refresh the JWT access token using the refresh token cookie.
-- `POST /account/send-email-verification/` - Send an email verification link to the user.
-- `POST /account/change-password/` - Change the password for the currently authenticated user.
-- `POST /account/send-password-reset-email/` - Send a password reset link to the user's email.
-- `POST /account/reset-password/` - Reset the user's password using a token.
-- `POST /account/logout/` - Revoke tokens and clear HTTP-only cookies.
-- `GET /account/me/` - Retrieve details of the currently authenticated user (Protected endpoint).
-- `GET /account/verify-email/` - Verify the user's email address using a token.
-- `GET /account/admin/` - Retrieve admin-only data (Requires admin privileges).
+- `POST /api/v1/account/register/` - Register a new user.
+- `POST /api/v1/account/login/` - Authenticate user and set HTTP-only cookies with JWT tokens.
+- `POST /api/v1/account/refresh/` - Refresh the JWT access token using the refresh token cookie.
+- `POST /api/v1/account/send-email-verification/` - Send an email verification link to the user.
+- `POST /api/v1/account/change-password/` - Change the password for the currently authenticated user.
+- `POST /api/v1/account/send-password-reset-email/` - Send a password reset link to the user's email.
+- `POST /api/v1/account/reset-password/` - Reset the user's password using a token.
+- `POST /api/v1/account/logout/` - Revoke tokens and clear HTTP-only cookies.
+- `GET /api/v1/account/me/` - Retrieve details of the currently authenticated user (Protected endpoint).
+- `GET /api/v1/account/verify-email/` - Verify the user's email address using a token.
+- `GET /api/v1/account/admin/` - Retrieve admin-only data (Requires admin privileges).
 
 ## 📜 Available Scripts (Taskipy)
 
@@ -166,6 +170,15 @@ We use `taskipy` to simplify running common tasks. Run these commands from the p
 - **`task lint`**: Runs the linter to check for code issues using `ruff check`.
 - **`task test`**: Runs the pytest test suite.
 - **`task test_cov`**: Runs the test suite and generates a coverage report.
+
+## 🏗️ Architecture
+
+This backend follows modern software design patterns:
+
+- **Repository Pattern**: Data access logic is abstracted into repository classes (`UserRepository`, `TokenRepository`), decoupling service logic from database operations.
+- **Dependency Injection**: Core services like email sending are injected via interfaces (`EmailProvider`), allowing easy swapping of implementations.
+- **Domain Exceptions**: Custom exception hierarchy with centralized handler, replacing inline HTTPException calls for cleaner error handling.
+- **API Versioning**: All endpoints are prefixed with `/api/v1` for future version management.
 
 ## 🧪 Testing & Quality Assurance
 
