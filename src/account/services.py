@@ -35,7 +35,7 @@ class AccountService:
 
         if result.first():
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_409_CONFLICT,
                 detail='Email already registered',
             )
 

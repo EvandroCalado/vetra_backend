@@ -35,7 +35,7 @@ async def test_register_existing_email(client: AsyncClient):
 
     # Second registration with the same email should fail
     response_duplicate = await client.post('/account/register/', json=payload)
-    assert response_duplicate.status_code == status.HTTP_404_NOT_FOUND
+    assert response_duplicate.status_code == status.HTTP_409_CONFLICT
     assert response_duplicate.json() == {'detail': 'Email already registered'}
 
 
