@@ -13,6 +13,7 @@ Vetra Backend is a robust and scalable RESTful API built with modern Python tech
 - **Linting & Formatting:** [Ruff](https://beta.ruff.rs/docs/) - An extremely fast Python linter and code formatter.
 - **Task Runner:** [Taskipy](https://github.com/illBeRoy/taskipy) for easy command execution.
 - **Package Manager:** [uv](https://github.com/astral-sh/uv) - Extremely fast Python package installer and resolver.
+- **Testing:** `pytest`, `pytest-asyncio`, `pytest-cov`, and `httpx` for comprehensive asynchronous API testing.
 
 ## 📁 Project Structure
 
@@ -113,6 +114,22 @@ The API will be available at: **http://localhost:8000**
 
 Interactive API Documentation (Swagger UI) is automatically available at: **http://localhost:8000/docs**
 
+### 7. Run the Tests
+
+The project includes a robust test suite with 100% code coverage. To run the tests, a dedicated test database container is required (automatically started with `docker-compose up -d`).
+
+To run the tests:
+
+```bash
+task test
+```
+
+To run the tests with coverage report:
+
+```bash
+task test_cov
+```
+
 ## 🔐 Authentication & Security
 
 The authentication system is built with security best practices:
@@ -147,3 +164,13 @@ We use `taskipy` to simplify running common tasks. Run these commands from the p
 - **`task format`**: Formats the code using `ruff format`.
 - **`task pre_format`**: Fixes auto-fixable linting errors using `ruff check --fix`.
 - **`task lint`**: Runs the linter to check for code issues using `ruff check`.
+- **`task test`**: Runs the pytest test suite.
+- **`task test_cov`**: Runs the test suite and generates a coverage report.
+
+## 🧪 Testing & Quality Assurance
+
+This backend was built with high reliability in mind and maintains **100% test coverage** across all modules, including models, dependencies, routers, services, utilities, and configurations.
+
+- **Isolated Test Environment:** Tests run against a dedicated Dockerized database (`vetra_test_db`) that is spun up automatically, ensuring test data never interferes with your development or production databases.
+- **Edge-Case Coverage:** The test suite covers happy paths, unauthorized access scenarios, expired/invalid JWT tokens, and Pydantic validation errors.
+- **Async Testing:** fully asynchronous testing powered by `pytest-asyncio` and `httpx.AsyncClient`.
