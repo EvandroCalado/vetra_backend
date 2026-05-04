@@ -17,7 +17,9 @@ async def test_verify_email_success(client: AsyncClient):
     }
 
     # Pre-register user to get the ID
-    register_response = await client.post('/api/v1/account/register/', json=payload)
+    register_response = await client.post(
+        '/api/v1/account/register/', json=payload
+    )
     assert register_response.status_code == status.HTTP_201_CREATED
     user_id = register_response.json()['id']
 
@@ -42,8 +44,8 @@ async def test_verify_email_invalid_token(client: AsyncClient):
         '/api/v1/account/verify-email/?token=invalid_token_string'
     )
 
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {'detail': 'Invalid token'}
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {'detail': 'Invalid or expired token'}
 
 
 @pytest.mark.asyncio

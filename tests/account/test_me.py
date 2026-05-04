@@ -44,7 +44,7 @@ async def test_me_invalid_token(client: AsyncClient):
     response = await client.get('/api/v1/account/me/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {'detail': 'Invalid token'}
+    assert response.json() == {'detail': 'Invalid or expired token'}
 
 
 @pytest.mark.asyncio
@@ -61,4 +61,4 @@ async def test_me_expired_token(client: AsyncClient):
     response = await client.get('/api/v1/account/me/')
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {'detail': 'Token has expired'}
+    assert response.json() == {'detail': 'Invalid or expired token'}

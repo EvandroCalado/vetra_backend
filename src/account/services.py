@@ -1,8 +1,16 @@
-from fastapi import HTTPException, Request, status
+from fastapi import Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.account.exceptions import (
+    InvalidCredentialsError,
+    InvalidOrExpiredTokenError,
+    OldPasswordMismatchError,
+    RefreshTokenMissingError,
+    UserAlreadyExistsError,
+    UserNotFoundError,
+)
 from src.account.models import User
 from src.account.schemas import (
     PasswordChange,
@@ -34,10 +42,7 @@ class AccountService:
         result = await self.session.execute(stmt)
 
         if result.first():
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail='Email already registered',
-            )
+            raise UserAlreadyExistsError('Email already registered')
 
         new_user = User(
             email=user.email, hashed_password=hash_password(user.password)
@@ -57,10 +62,7 @@ class AccountService:
         if not user or not verify_password(
             user_login.password, user.hashed_password
         ):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid credentials',
-            )
+            raise InvalidCredentialsError('Invalid credentials')
 
         return user
 
@@ -68,18 +70,12 @@ class AccountService:
         token = request.cookies.get('refresh_token')
 
         if not token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Refresh token missing',
-            )
+            raise RefreshTokenMissingError('Refresh token missing')
 
         user = await verify_refresh_token(self.session, token)
 
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid or expired refresh token',
-            )
+            raise InvalidCredentialsError('Invalid or expired refresh token')
 
         return user
 
@@ -100,19 +96,14 @@ class AccountService:
         )
 
         if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Invalid or expired token',
-            )
+            raise InvalidOrExpiredTokenError('Invalid or expired token')
 
         stmt = select(User).where(User.id == user_id)
         result = await self.session.scalars(stmt)
         user = result.first()
 
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail='User not found'
-            )
+            raise UserNotFoundError('User not found')
 
         user.is_verified = True
 
@@ -129,10 +120,7 @@ class AccountService:
         )
 
         if not is_valid_password:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Old password is incorrect',
-            )
+            raise OldPasswordMismatchError('Old password is incorrect')
 
         user.hashed_password = hash_password(password_change.new_password)
 
@@ -157,19 +145,14 @@ class AccountService:
         )
 
         if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Invalid or expired token',
-            )
+            raise InvalidOrExpiredTokenError('Invalid or expired token')
 
         stmt = select(User).where(User.id == user_id)
         result = await self.session.scalars(stmt)
         user = result.first()
 
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail='User not found'
-            )
+            raise UserNotFoundError('User not found')
 
         user.hashed_password = hash_password(password_reset.new_password)
 

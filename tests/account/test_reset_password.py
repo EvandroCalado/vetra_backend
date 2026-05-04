@@ -17,7 +17,9 @@ async def test_reset_password_success(client: AsyncClient):
     }
 
     # Pre-register user to get the ID
-    register_response = await client.post('/api/v1/account/register/', json=payload)
+    register_response = await client.post(
+        '/api/v1/account/register/', json=payload
+    )
     assert register_response.status_code == status.HTTP_201_CREATED
     user_id = register_response.json()['id']
 
@@ -54,8 +56,8 @@ async def test_reset_password_invalid_token(client: AsyncClient):
         '/api/v1/account/reset-password/', json=reset_payload
     )
 
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {'detail': 'Invalid token'}
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {'detail': 'Invalid or expired token'}
 
 
 @pytest.mark.asyncio
@@ -91,7 +93,9 @@ async def test_reset_password_invalid_new_password(
     }
 
     # Pre-register user
-    register_response = await client.post('/api/v1/account/register/', json=payload)
+    register_response = await client.post(
+        '/api/v1/account/register/', json=payload
+    )
     user_id = register_response.json()['id']
     token = create_password_reset_token(user_id)
 

@@ -1,12 +1,12 @@
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import HTTPException, status
 from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.account.exceptions import UserNotFoundError
 from src.account.models import RefreshToken, User
 from src.db.settings import settings
 
@@ -57,23 +57,15 @@ async def create_tokens(session: AsyncSession, user: User):
     }
 
 
-def decode_token(token: str):
+def decode_token(token: str) -> dict | None:
     try:
         return jwt.decode(
             token,
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
         )
-    except ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Token has expired',
-        )
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Invalid token',
-        )
+    except (ExpiredSignatureError, JWTError):
+        return None
 
 
 async def verify_refresh_token(session: AsyncSession, token: str):
@@ -117,15 +109,13 @@ def verify_email_token_and_get_user_id(token: str, token_type: str):
     return payload.get('sub')
 
 
-async def get_user_by_email(session: AsyncSession, email: str):
+async def get_user_by_email(session: AsyncSession, email: str) -> User:
     stmt = select(User).where(User.email == email)
     result = await session.scalars(stmt)
     user = result.first()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail='User not found'
-        )
+        raise UserNotFoundError('User not found')
 
     return user
 
